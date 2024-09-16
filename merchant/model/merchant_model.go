@@ -7,7 +7,7 @@ import (
 // Identification model
 type Merchant struct {
 	ID              uint              `gorm:"primaryKey;autoIncrement" json:"id"`
-	PersonID     int   `gorm:"index;not null" json:"person_id"`
+	CustomerID     int   `gorm:"index;not null" json:"customer_id"`
 	Name        string    `gorm:"size:50" json:"name"`
 	Product        []Product        `gorm:"foreignKey:MerchantID;constraint:OnDelete:CASCADE;" json:"product"`
 	AddressMerchant []AddressMerchant `gorm:"foreignKey:MerchantID;constraint:OnDelete:CASCADE;" json:"address_merchant"`

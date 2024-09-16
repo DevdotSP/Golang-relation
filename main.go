@@ -2,8 +2,8 @@ package main
 
 import (
 	"sample/database"
-	merchantmodel "sample/merchant/model"
-	personmodel "sample/person/model"
+	// merchantmodel "sample/merchant/model"
+	// personmodel "sample/person/model"
 
 	"sample/routes"
 
@@ -20,9 +20,9 @@ func main() {
 	// Initialize the database connection
 	db := database.InitDB()
 
-	if err := db.AutoMigrate(&personmodel.Person{}, &personmodel.Address{}, &personmodel.Identification{}, &personmodel.Contact{}, &merchantmodel.Merchant{}, &merchantmodel.Product{}, &merchantmodel.ContactMerchant{}, merchantmodel.AddressMerchant{},  ); err != nil {
-log.Println("migrate", err)
-	}; log.Println("success")
+// 	if err := db.AutoMigrate(&personmodel.Customer{}, &personmodel.Address{}, &personmodel.Identification{}, &personmodel.Contact{}, &merchantmodel.Merchant{}, &merchantmodel.Product{}, &merchantmodel.ContactMerchant{}, merchantmodel.AddressMerchant{},  ); err != nil {
+// log.Println("migrate", err)
+// 	}; log.Println("success")
 	
 	
 

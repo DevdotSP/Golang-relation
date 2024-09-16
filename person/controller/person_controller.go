@@ -13,7 +13,7 @@ import (
 func CreatePerson(db *gorm.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		// Main model
-		var person personmodel.Person
+		var person personmodel.Customer
 		var Addresses personmodel.Address
 		var Identifications personmodel.Identification
 		var Contacts personmodel.Contact
@@ -33,20 +33,19 @@ func CreatePerson(db *gorm.DB) fiber.Handler {
 }
 
 func GetAllPersons(db *gorm.DB) fiber.Handler {
-	return script.GetAllResources[personmodel.Person](db, []string{"Addresses", "Identifications", "Contacts", "Merchant", "Merchant.Product", "Merchant.ContactMerchant", "Merchant.AddressMerchant"} )
+	return script.GetAllResources[personmodel.Customer](db, []string{"Addresses", "Identifications", "Contacts", "Merchant", "Merchant.Product", "Merchant.ContactMerchant", "Merchant.AddressMerchant"} )
 }
-
 
 
 func GetPersonByID(db *gorm.DB) fiber.Handler {
-	return script.GetResourceByID[personmodel.Person](db, []string{"Addresses", "Identifications", "Contacts", "Merchant", "Merchant.Product", "Merchant.ContactMerchant", "Merchant.AddressMerchant"})
+	return script.GetResourceByID[personmodel.Customer](db, []string{"Addresses", "Identifications", "Contacts", "Merchant", "Merchant.Product", "Merchant.ContactMerchant", "Merchant.AddressMerchant"})
 }
 
 func UpdatePerson(db *gorm.DB) fiber.Handler {
-	var person personmodel.Person
-	return script.UpdateResource[personmodel.Person](db, &person)
+	var person personmodel.Customer
+	return script.UpdateResource[personmodel.Customer](db, &person)
 }
 
 func DeletePerson(db *gorm.DB) fiber.Handler {
-	return script.DeleteResource[personmodel.Person](db)
+	return script.DeleteResource[personmodel.Customer](db)
 }
