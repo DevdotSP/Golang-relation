@@ -44,15 +44,6 @@ func CreateProduct(db *gorm.DB) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		var	product     merchantmodel.Product      
 
-		// Parse person data from the request body
-		if err := c.Bind().Body(&product); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
-				RetCode: string(response.BadRequest),
-				Message: "Invalid request body",
-				Data: err,
-			})
-		}
-
 		// Use the generic function to create the person and related resources
 		return script.CreateResource(db, &product)(c)
 	}
@@ -65,15 +56,6 @@ func CreateMerchant(db *gorm.DB) fiber.Handler {
 		var AddressMerchant      merchantmodel.AddressMerchant      
 		var	ContactMerchant merchantmodel.ContactMerchant
 		var	Product     merchantmodel.Product      
-
-		// Parse person data from the request body
-		if err := c.Bind().Body(&merchant); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
-				RetCode: string(response.BadRequest),
-				Message: "Invalid request body",
-				Data: err,
-			})
-		}
 
 		// Use the generic function to create the person and related resources
 		return script.CreateResource(db, &merchant, 

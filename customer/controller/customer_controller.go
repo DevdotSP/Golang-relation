@@ -2,7 +2,7 @@ package customercontroller
 
 import (
 	customermodel "sample/customer/model"
-	"sample/response"
+	// "sample/response"
 	"sample/script"
 
 	"github.com/gofiber/fiber/v3"
@@ -16,15 +16,6 @@ func Createcustomer(db *gorm.DB) fiber.Handler {
 		var Addresses customermodel.Address
 		var Identifications customermodel.Identification
 		var Contacts customermodel.Contact
-
-		// Parse person data from the request body
-		if err := c.Bind().Body(&customer); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
-				RetCode: string(response.BadRequest),
-				Message: "Invalid request body",
-				Data:    err,
-			})
-		}
 
 		// Use the generic function to create the person and related resources
 		return script.CreateResource(db, &customer,
