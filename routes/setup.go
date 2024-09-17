@@ -3,7 +3,7 @@ package routes
 import (
 	merchantcontroller "sample/merchant/controller"
 	"sample/middleware"
-	personcontroller "sample/person/controller"
+	customercontroller "sample/customer/controller"
 
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
@@ -13,13 +13,13 @@ import (
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 	// Group routes for persons under /api/person
-	personGroup := app.Group("/api/person", middleware.HeadersMiddleware())
+	customerGroup := app.Group("/api/customer", middleware.HeadersMiddleware())
 	{
-		personGroup.Post("/", personcontroller.CreatePerson(db))
-		personGroup.Get("/", personcontroller.GetAllPersons(db))
-		personGroup.Get("/:id", personcontroller.GetPersonByID(db))
-		personGroup.Put("/:id", personcontroller.UpdatePerson(db))
-		personGroup.Delete("/:id", personcontroller.DeletePerson(db))
+		customerGroup.Post("/", customercontroller.Createcustomer(db))
+		customerGroup.Get("/", customercontroller.GetAllcustomers(db))
+		customerGroup.Get("/:id", customercontroller.GetcustomerByID(db))
+		customerGroup.Put("/:id", customercontroller.Updatecustomer(db))
+		customerGroup.Delete("/:id", customercontroller.Deletecustomer(db))
 	}
 
 	// Group routes for persons under /api/person

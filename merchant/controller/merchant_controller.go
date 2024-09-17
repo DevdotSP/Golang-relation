@@ -1,9 +1,8 @@
 package merchantcontroller
 
 import (
-	"log"
-	"sample/custom"
 	merchantmodel "sample/merchant/model"
+	"sample/response"
 	"sample/script"
 
 	"github.com/gofiber/fiber/v3"
@@ -15,16 +14,26 @@ func GetAllProduct(db *gorm.DB) fiber.Handler {
 		var product []merchantmodel.Product
 
 		if err := db.Find(&product).Error; err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Invalid person data", fiber.StatusBadRequest))
+			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
+				RetCode: string(response.BadRequest),
+				Message: "Invalid product data",
+				Data: err,
+			})
 		} 
 
 		if err := db.Find(&product).Error; err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Could not retrieve resource", fiber.StatusNotFound))
+			return c.Status(fiber.StatusNotFound).JSON(response.ErrorModel{
+				RetCode: string(response.NotFound),
+				Message: "Could not retrieve data",
+				Data: err,
+			})
 		}
 
 		if len(product) == 0 {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"message": "No records found",
+			return c.Status(fiber.StatusNotFound).JSON(response.ErrorModel{
+				RetCode: string(response.NotFound),
+				Message: "Could not retrieve data",
+				Data: fiber.ErrNotFound,
 			}) }
 
 		return c.Status(fiber.StatusOK).JSON(product)
@@ -37,8 +46,11 @@ func CreateProduct(db *gorm.DB) fiber.Handler {
 
 		// Parse person data from the request body
 		if err := c.Bind().Body(&product); err != nil {
-			log.Printf("Error parsing person data: %+v", err)
-			return custom.SendErrorResponse(c, custom.NewHttpError("Invalid person data", fiber.StatusBadRequest))
+			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
+				RetCode: string(response.BadRequest),
+				Message: "Invalid request body",
+				Data: err,
+			})
 		}
 
 		// Use the generic function to create the person and related resources
@@ -56,8 +68,11 @@ func CreateMerchant(db *gorm.DB) fiber.Handler {
 
 		// Parse person data from the request body
 		if err := c.Bind().Body(&merchant); err != nil {
-			log.Printf("Error parsing person data: %+v", err)
-			return custom.SendErrorResponse(c, custom.NewHttpError("Invalid person data", fiber.StatusBadRequest))
+			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
+				RetCode: string(response.BadRequest),
+				Message: "Invalid request body",
+				Data: err,
+			})
 		}
 
 		// Use the generic function to create the person and related resources

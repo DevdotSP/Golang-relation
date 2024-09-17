@@ -24,8 +24,6 @@ func main() {
 // log.Println("migrate", err)
 // 	}; log.Println("success")
 	
-	
-
 	// Setup routes
 	routes.SetupRoutes(app, db)
 

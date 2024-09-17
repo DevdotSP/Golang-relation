@@ -1,4 +1,4 @@
-package personmodel
+package customermodel
 
 import (
 	merchantmodel "sample/merchant/model"

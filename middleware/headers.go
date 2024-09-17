@@ -19,7 +19,7 @@ func HeadersMiddleware() fiber.Handler {
 		if c.Method() == "OPTIONS" {
 			return c.SendStatus(fiber.StatusNoContent)
 		}
-
+  
 		// Continue to the next handler
 		return c.Next()
 	}

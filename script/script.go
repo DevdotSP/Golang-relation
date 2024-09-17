@@ -1,10 +1,10 @@
 package script
 
 import (
-
 	"log"
 	"reflect"
 	"sample/custom"
+	"sample/response"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
@@ -22,24 +22,36 @@ func CreateProduct[T any](db *gorm.DB, input *T) fiber.Handler {
 		// Create the main resource
 		if err := db.Create(input).Error; err != nil {
 			if isUniqueConstraintError(err) {
-				return custom.SendErrorResponse(c, custom.NewHttpError("Duplicate entry detected", fiber.StatusConflict))
+				return c.Status(fiber.StatusForbidden).JSON(response.ErrorModel{
+					RetCode: string(response.Forbidden),
+					Message: "Could not create resource",
+					Data: err,
+				})
 			}
-			return custom.SendErrorResponse(c, custom.NewHttpError("Could not create resource", fiber.StatusInternalServerError))
+			return c.Status(fiber.StatusInternalServerError).JSON(response.ErrorModel{
+				RetCode: string(response.InternalServerError),
+				Message: "Could not create resource",
+				Data: err,
+			})
 		}
 
 		// Extract the ID from the input model
 		val := reflect.ValueOf(input).Elem() // Dereference the pointer to get the value
 		idField := val.FieldByName("ID")
 		if !idField.IsValid() {
-			return custom.SendErrorResponse(c, custom.NewHttpError("ID field not found in resource", fiber.StatusInternalServerError))
+			return c.Status(fiber.StatusForbidden).JSON(response.ErrorModel{
+				RetCode: string(response.Forbidden),
+				Message: "id field not found",
+				Data: fiber.ErrForbidden,
+			})
 		}
 
 		id := idField.Uint() // Get the ID value
 
-		// Respond with success message and created resource ID
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"message": "Resource created successfully",
-			"id":      id,
+		return c.Status(fiber.StatusOK).JSON(response.ErrorModel{
+			RetCode: string(response.SuccessOK),
+			Message: "Success",
+			Data: id,
 		})
 	}
 }
@@ -50,22 +62,38 @@ func CreateResource[T any](db *gorm.DB, input *T, relatedModels ...interface{}) 
 	return func(c fiber.Ctx) error {
 		// Bind the request body to the main input model
 		if err := c.Bind().Body(input); err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Invalid request body", fiber.StatusBadRequest))
+			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
+				RetCode: string(response.BadRequest),
+				Message: "Invalid request body",
+				Data: err,
+			})
 		}
 
 		// Create the main resource
 		if err := db.Create(input).Error; err != nil {
 			if isUniqueConstraintError(err) {
-				return custom.SendErrorResponse(c, custom.NewHttpError("Duplicate entry detected", fiber.StatusConflict))
+				return c.Status(fiber.StatusForbidden).JSON(response.ErrorModel{
+					RetCode: string(response.Forbidden),
+					Message: "Duplicate",
+					Data: err,
+				})
 			}
-			return custom.SendErrorResponse(c, custom.NewHttpError("Could not create resource", fiber.StatusInternalServerError))
+			return c.Status(fiber.StatusInternalServerError).JSON(response.ErrorModel{
+				RetCode: string(response.InternalServerError),
+				Message: "Could not create resource",
+				Data: err,
+			})
 		}
 
 		// Extract the ID from the input model
 		val := reflect.ValueOf(input).Elem() // Dereference the pointer to get the value
 		idField := val.FieldByName("ID")
 		if !idField.IsValid() {
-			return custom.SendErrorResponse(c, custom.NewHttpError("ID field not found in resource", fiber.StatusInternalServerError))
+			return c.Status(fiber.StatusInternalServerError).JSON(response.ErrorModel{
+				RetCode: string(response.InternalServerError),
+				Message: "Invalid ID",
+				Data: fiber.StatusInternalServerError,
+			})
 		}
 
 		id := idField.Uint() // Get the ID value
@@ -89,23 +117,33 @@ func CreateResource[T any](db *gorm.DB, input *T, relatedModels ...interface{}) 
 					elemVal := reflect.ValueOf(elem).Elem()
 
 					// Set the foreign key field (PersonID)
-					if field := elemVal.FieldByName("PersonID"); field.IsValid() && field.CanSet() {
+					if field := elemVal.FieldByName("CustomerID"); field.IsValid() && field.CanSet() {
 						field.Set(reflect.ValueOf(id))
 					}
 
 					// Create the related resource
 					if err := db.Create(elem).Error; err != nil {
 						if isUniqueConstraintError(err) {
-							return custom.SendErrorResponse(c, custom.NewHttpError("Duplicate entry detected in related model", fiber.StatusConflict))
+							return c.Status(fiber.StatusForbidden).JSON(response.ErrorModel{
+								RetCode: string(response.Forbidden),
+								Message: "Duplicate data",
+								Data: err,
+							})
 						}
-						return custom.SendErrorResponse(c, custom.NewHttpError("Could not create related resource", fiber.StatusInternalServerError))
+						return c.Status(fiber.StatusInternalServerError).JSON(response.ErrorModel{
+							RetCode: string(response.InternalServerError),
+							Message: "Could not create related resource",
+							Data: err,
+						})
 					}
 				}
 			}
 		}
 
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"message": "Resource created successfully",
+		return c.Status(fiber.StatusOK).JSON(response.ErrorModel{
+			RetCode: string(response.SuccessOK),
+			Message: "Success Insert",
+			Data: "Success",
 		})
 	}
 }
@@ -128,17 +166,26 @@ func GetAllResources[T any](db *gorm.DB, preloads []string) fiber.Handler {
 		}
 
 		if err := query.Find(&resources).Error; err != nil {
-			err := custom.NewHttpError("Could not retrieve resources", fiber.StatusInternalServerError)
-			return custom.SendErrorResponse(c, err)
-		}
-
-		if len(resources) == 0 {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"message": "No records found",
+			return c.Status(fiber.StatusInternalServerError).JSON(response.ErrorModel{
+				RetCode: string(response.InternalServerError),
+				Message: "Could not retrieve resource",
+				Data:    err,
 			})
 		}
 
-		return c.JSON(resources)
+		if len(resources) == 0 {
+			return c.Status(fiber.StatusNotFound).JSON(response.ErrorModel{
+				RetCode: string(response.NotFound),
+				Message: "No resource found",
+				Data:    resources,
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(response.ErrorModel{
+			RetCode: string(response.SuccessOK),
+			Message: "success",
+			Data:    resources,
+		})
 	}
 }
 
@@ -150,7 +197,11 @@ func GetResourceByID[T any](db *gorm.DB, preloads []string) fiber.Handler {
 
 		resourceID, err := custom.ParseID(id)
 		if err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Invalid ID", fiber.StatusBadRequest))
+			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
+				RetCode: string(response.BadRequest),
+				Message: "invalid id",
+				Data:    err,
+			})
 		}
 
 		query := db
@@ -159,10 +210,18 @@ func GetResourceByID[T any](db *gorm.DB, preloads []string) fiber.Handler {
 		}
 
 		if err := query.First(&resource, resourceID).Error; err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Could not retrieve resource", fiber.StatusNotFound))
+			return c.Status(fiber.StatusNotFound).JSON(response.ErrorModel{
+				RetCode: string(response.NotFound),
+				Message: "Could not find update resource",
+				Data:    err,
+			})
 		}
 
-		return c.JSON(resource)
+		return c.Status(fiber.StatusOK).JSON(response.ErrorModel{
+			RetCode: string(response.SuccessOK),
+			Message: "Success",
+			Data:    resource,
+		})
 	}
 }
 
@@ -172,28 +231,46 @@ func UpdateResource[T any](db *gorm.DB, input *T) fiber.Handler {
 		id := c.Params("id")
 		resourceID, err := custom.ParseID(id)
 		if err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Invalid ID", fiber.StatusBadRequest))
+			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
+				RetCode: string(response.BadRequest),
+				Message: "Invalid ID",
+				Data:    resourceID,
+			})
 		}
 
 		// Parse request body into the input model
 		if err := c.Bind().Body(input); err != nil {
 			log.Println("Error parsing body:", err)
-			return custom.SendErrorResponse(c, custom.NewHttpError("Invalid request body", fiber.StatusBadRequest))
+			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
+				RetCode: string(response.BadRequest),
+				Message: "Could not find update resource",
+				Data:  err,
+			})
 		}
 
 		// Check if the user exists before updating
 		var existingUser T
 		if err := db.First(&existingUser, resourceID).Error; err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Resource not found", fiber.StatusNotFound))
+			return c.Status(fiber.StatusNotFound).JSON(response.ErrorModel{
+				RetCode: string(response.NotFound),
+				Message: "Could not find update resource",
+				Data:    existingUser,
+			})
 		}
 
 		// Update only the fields present in the input struct
 		if err := db.Model(&existingUser).Where("id = ?", resourceID).Updates(input).Error; err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Could not update resource", fiber.StatusInternalServerError))
+			return c.Status(fiber.StatusInternalServerError).JSON(response.ErrorModel{
+				RetCode: string(response.InternalServerError),
+				Message: "Could not find update resource",
+				Data:    existingUser,
+			})
 		}
 
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"message": "Resource updated successfully",
+		return c.Status(fiber.StatusOK).JSON(response.ErrorModel{
+			RetCode: string(response.SuccessOK),
+	    Message: "Update success",
+	    Data: existingUser,
 		})
 	}
 }
@@ -204,16 +281,26 @@ func DeleteResource[T any](db *gorm.DB) fiber.Handler {
 		id := c.Params("id")
 		resourceID, err := custom.ParseID(id) // Assuming ParseID handles ID parsing correctly
 		if err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Invalid ID", fiber.StatusBadRequest))
+			return c.Status(fiber.StatusBadRequest).JSON(response.ErrorModel{
+				RetCode: string(response.BadRequest),
+				Message: "Invalid ID",
+				Data:    err,
+			})
 		}
 
 		// Delete the main resource
 		if err := db.Delete(new(T), resourceID).Error; err != nil {
-			return custom.SendErrorResponse(c, custom.NewHttpError("Could not delete resource", fiber.StatusInternalServerError))
+			return c.Status(fiber.StatusInternalServerError).JSON(response.ErrorModel{
+				RetCode: string(response.InternalServerError),
+				Message: "Server Error",
+				Data:    err.Error(),
+			})
 		}
 
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"message": "Resource deleted successfully",
+		return c.Status(fiber.StatusOK).JSON(response.ErrorModel{
+			RetCode: "200",
+			Message: "Deleted Successfully",
+			Data:    resourceID,
 		})
 	}
 }
